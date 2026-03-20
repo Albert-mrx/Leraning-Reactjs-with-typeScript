@@ -1,24 +1,47 @@
 import { useState } from "react";
 import type { Gif } from "../interfaces/gif.interface";
 import { getGifsByQuery } from "../actions/get-gifs-by-query.action";
+const gifsCache:Record<string,Gif[]> = {};
+
 
 export const useGifs = ()=>{
         const [gifs,setGifs] = useState<Gif[]>([])
         const [previousTerms, setPreviousTerms] = useState<string[]>([]);
-        const handleTermClicked = (term:string)=>{
+
+        
+
+        const handleTermClicked = async (term:string)=>{
            
-        }
-        const handleSearch = async (query:string) =>{
-            const cleanedQuery = query.toLowerCase().trim();
-            if (cleanedQuery.length === 0) return;
-    
-            setPreviousTerms(prev => {
-                if (prev.includes(cleanedQuery)) return prev;
-                return [cleanedQuery, ...prev];
-            });
+            if(gifsCache[term]){
+                setGifs(gifsCache[term]);
+                return;
+            }
             
-            const gifs=await getGifsByQuery(query);
+           const gifs = await getGifsByQuery(term);
+           setGifs(gifs);
+        }
+        const handleSearch = async (query:string='') =>{
+            query = query.trim().toLocaleLowerCase();
+            if(query.length===0) return;
+            if(previousTerms.includes(query))return;
+            setPreviousTerms([query,...previousTerms].splice(0,8));
+
+            const gifs = await getGifsByQuery(query);
             setGifs(gifs);
+            gifsCache[query]=gifs;
+
+            console.log(gifsCache);
+            // const cleanedQuery = query.toLowerCase().trim();
+            // if (cleanedQuery.length === 0) return;
+
+            // setPreviousTerms(prev => {
+            //     if (prev.includes(cleanedQuery)) return prev;
+            //     return [cleanedQuery, ...prev];
+            // });
+            
+            // const gifs=await getGifsByQuery(query);
+            // setGifs(gifs);
+
             
         }
 
